@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: visitormgmt-deployment
+  namespace: dev
+  labels:
+    app: visitormgmt
+spec:
+  replicas: 1  # Number of desired replicas
+  selector:
+    matchLabels:
+      app: visitormgmt
+  template:
+    metadata:
+      labels:
+        app: visitormgmt
+    spec:
+      containers:
+        - name: visitormgmt
+          image: mahesh541/visitormgmt:latest
+          ports:
+            - containerPort: 8080
