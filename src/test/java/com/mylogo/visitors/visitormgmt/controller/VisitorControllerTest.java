@@ -1,6 +1,6 @@
 package com.mylogo.visitors.visitormgmt.controller;
 
-import com.mylogo.visitors.visitormgmt.config.VisitorDataSourceConfig;
+
 import com.mylogo.visitors.visitormgmt.model.Visitor;
 import com.mylogo.visitors.visitormgmt.service.VisitorService;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,67 +8,148 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 
 public class VisitorControllerTest {
 
-    private MockMvc mockMvc;
-
     @Mock
     private VisitorService visitorService;
-
-    @Mock
-    private VisitorDataSourceConfig visitorDataSourceConfig;
 
     @InjectMocks
     private VisitorController visitorController;
 
     @BeforeEach
-    public void setup() {
-        MockitoAnnotations.initMocks(VisitorControllerTest.class);
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testGetAllVisitors() throws Exception {
-        List<Visitor> visitors = Arrays.asList(
-                new Visitor(1L, "John Doe", "1234567890", "Meeting", LocalDateTime.now(), LocalDateTime.now(), 50L, true),
-                new Visitor(2L, "Jane Doe", "0987654321", "Interview", LocalDateTime.now(), LocalDateTime.now(), 40L, false)
-        );
+    void testGetAllVisitors() {
+        List<Visitor> visitors = Arrays.asList(new Visitor(), new Visitor());
         when(visitorService.getAllVisitors()).thenReturn(visitors);
 
-        mockMvc.perform(get("/visitors"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("John Doe"))
-                .andExpect(jsonPath("$[1].name").value("Jane Doe"));
+        List<Visitor> result = visitorController.getAllVisitors();
+
+        assertEquals(2, result.size());
+        verify(visitorService, times(1)).getAllVisitors();
     }
 
     @Test
-    public void testGetVisitorByIdFound() throws Exception {
-        Optional<Visitor> visitor = Optional.of(new Visitor(1L, "John Doe", "1234567890", "Meeting", LocalDateTime.now(), LocalDateTime.now(), 90L, true));
-        when(visitorService.getVisitorById(1L)).thenReturn(visitor);
+    void testGetVisitorById_Found() {
+        Visitor visitor = new Visitor();
+        when(visitorService.getVisitorById(1L)).thenReturn(Optional.of(visitor));
 
-        mockMvc.perform(get("/visitors/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("John Doe"));
+        ResponseEntity<Visitor> response = visitorController.getVisitorById(1L);
+
+        assertEquals(ResponseEntity.ok(visitor), response);
+        verify(visitorService, times(1)).getVisitorById(1L);
     }
 
     @Test
-    public void testGetVisitorByIdNotFound() throws Exception {
+    void testGetVisitorById_NotFound() {
         when(visitorService.getVisitorById(1L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/visitors/1"))
-                .andExpect(status().isNotFound());
+        ResponseEntity<Visitor> response = visitorController.getVisitorById(1L);
+
+        assertEquals(ResponseEntity.notFound().build(), response);
+        verify(visitorService, times(1)).getVisitorById(1L);
+    }
+
+    @Test
+    void testAddVisitor() {
+        Visitor visitor = new Visitor();
+        when(visitorService.addVisitor(visitor)).thenReturn(visitor);
+
+        Visitor result = visitorController.addVisitor(visitor);
+
+        assertEquals(visitor, result);
+        verify(visitorService, times(1)).addVisitor(visitor);
+    }
+
+    @Test
+    void testUpdateVisitor_Success() {
+        Visitor visitor = new Visitor();
+        when(visitorService.updateVisitor(1L, visitor)).thenReturn(visitor);
+
+        ResponseEntity<Visitor> response = visitorController.updateVisitor(1L, visitor);
+
+        assertEquals(ResponseEntity.ok(visitor), response);
+        verify(visitorService, times(1)).updateVisitor(1L, visitor);
+    }
+
+    @Test
+    void testAnalyzeVisitors_Success() throws ExecutionException, InterruptedException {
+        // Arrange
+        List<Visitor> visitors = Arrays.asList(new Visitor(), new Visitor());
+        when(visitorService.fetchAllVisitors()).thenReturn(CompletableFuture.completedFuture(visitors));
+        when(visitorService.calculateTotalVisitDuration(visitors)).thenReturn(CompletableFuture.completedFuture(120L));
+
+        // Act
+        CompletableFuture<ResponseEntity<String>> responseFuture = visitorController.analyzeVisitors();
+        ResponseEntity<String> response = responseFuture.get();
+
+        // Assert
+        assertEquals(ResponseEntity.ok("Total visit duration: 120 minutes"), response);
+        verify(visitorService, times(1)).fetchAllVisitors();
+        verify(visitorService, times(1)).calculateTotalVisitDuration(visitors);
+    }
+
+    @Test
+    void testAnalyzeVisitors_Exception() throws ExecutionException, InterruptedException {
+        // Arrange
+        when(visitorService.fetchAllVisitors()).thenReturn(CompletableFuture.failedFuture(new RuntimeException("Service error")));
+
+        // Act
+        CompletableFuture<ResponseEntity<String>> responseFuture = visitorController.analyzeVisitors();
+        ResponseEntity<String> response = responseFuture.get();
+
+        // Assert
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Error calculating total visit duration", response.getBody());
+        verify(visitorService, times(1)).fetchAllVisitors();
+        verify(visitorService, times(0)).calculateTotalVisitDuration(anyList());
+    }
+
+    @Test
+    void testDeleteVisitor_Success() {
+        // Arrange
+        Long visitorId = 1L;
+
+        // Act
+        ResponseEntity<Void> response = visitorController.deleteVisitor(visitorId);
+
+        // Assert
+        assertEquals(ResponseEntity.noContent().build(), response);
+        verify(visitorService, times(1)).deleteVisitor(visitorId);
+    }
+
+    @Test
+    void testDeleteVisitor_NonExistentId() {
+        // Arrange
+        Long nonExistentVisitorId = 999L;
+        doThrow(new RuntimeException("Visitor not found")).when(visitorService).deleteVisitor(nonExistentVisitorId);
+
+        // Act & Assert
+        try {
+            visitorController.deleteVisitor(nonExistentVisitorId);
+        } catch (RuntimeException e) {
+            assertEquals("Visitor not found", e.getMessage());
+        }
+        verify(visitorService, times(1)).deleteVisitor(nonExistentVisitorId);
     }
 
 }
