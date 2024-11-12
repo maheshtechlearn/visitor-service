@@ -22,7 +22,7 @@ public class RedisConfig {
                 .entryTtl(Duration.ofMinutes(10))  // Set cache expiration duration
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
-                .prefixKeysWith("yourAppName:");  // Custom cache key prefix
+                .prefixKeysWith("myLogo:");  // Custom cache key prefix
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)
