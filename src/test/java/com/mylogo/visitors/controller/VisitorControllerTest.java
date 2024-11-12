@@ -1,8 +1,8 @@
-package com.mylogo.visitors.visitormgmt.controller;
+package com.mylogo.visitors.controller;
 
 
-import com.mylogo.visitors.visitormgmt.model.Visitor;
-import com.mylogo.visitors.visitormgmt.service.VisitorService;
+import com.mylogo.visitors.model.Visitor;
+import com.mylogo.visitors.service.VisitorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

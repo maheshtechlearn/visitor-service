@@ -1,6 +1,6 @@
-package com.mylogo.visitors.visitormgmt.repository;
+package com.mylogo.visitors.repository;
 
-import com.mylogo.visitors.visitormgmt.model.Visitor;
+import com.mylogo.visitors.model.Visitor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

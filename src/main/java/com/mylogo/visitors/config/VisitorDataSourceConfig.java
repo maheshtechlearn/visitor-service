@@ -1,11 +1,11 @@
-package com.mylogo.visitors.visitormgmt.config;
+package com.mylogo.visitors.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Data
-//@Configuration
+@Configuration
 @ConfigurationProperties(prefix = "spring.datasource")
 public class VisitorDataSourceConfig {
 

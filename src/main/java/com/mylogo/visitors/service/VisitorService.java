@@ -1,16 +1,15 @@
-package com.mylogo.visitors.visitormgmt.service;
+package com.mylogo.visitors.service;
 
-import com.mylogo.visitors.visitormgmt.handler.DatabaseOperationException;
-import com.mylogo.visitors.visitormgmt.handler.VisitorNotFoundException;
-import com.mylogo.visitors.visitormgmt.handler.VisitorRetrievalException;
-import com.mylogo.visitors.visitormgmt.model.Visitor;
-import com.mylogo.visitors.visitormgmt.repository.VisitorRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mylogo.visitors.repository.VisitorRepository;
+import com.mylogo.visitors.handler.DatabaseOperationException;
+import com.mylogo.visitors.handler.VisitorNotFoundException;
+import com.mylogo.visitors.handler.VisitorRetrievalException;
+import com.mylogo.visitors.model.Visitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,7 +25,7 @@ public class VisitorService {
     @Autowired
     private VisitorEventProducer eventProducer;
 
-    @Cacheable(value = "visitors")
+   // @Cacheable(value = "visitors")
     public List<Visitor> getAllVisitors() {
         try {
             logger.info("Attempting to retrieve all visitors");
@@ -37,7 +36,7 @@ public class VisitorService {
         }
     }
 
-    @Cacheable(value = "visitor", key = "#id")
+    //@Cacheable(value = "visitor", key = "#id")
     public Optional<Visitor> getVisitorById(Long id) {
         try {
             logger.info("Attempting to retrieve visitor with ID: {}", id);
@@ -54,21 +53,31 @@ public class VisitorService {
         }
     }
 
-    @CachePut(value = "visitor", key = "#visitor.id")
-    public Visitor addVisitor(Visitor visitor) {
-        Visitor savedVisitor = null;
-        try {
-            logger.info("Attempting to save a new visitor");
-            savedVisitor = visitorRepository.save(visitor);
-            eventProducer.sendVisitorEvent("Visitor added: " + savedVisitor.getId());
-        } catch (Exception e) {
-            logger.error("Error saving visitor", e);
-            throw new DatabaseOperationException("Error saving visitor", e);
-        }
-        return savedVisitor;
-    }
+   // @CachePut(value = "visitor", key = "#visitor.id")
+   public Visitor addVisitor(Visitor visitor) {
+       if (visitor == null) {
+           logger.warn("Attempted to add a null Visitor object.");
+           throw new IllegalArgumentException("Visitor cannot be null");
+       }
 
-    @CachePut(value = "visitor", key = "#id", condition = "#result != null")
+       Visitor savedVisitor = null;
+       try {
+           logger.info("Attempting to save a new visitor: {}", visitor);
+           savedVisitor = visitorRepository.save(visitor);
+           logger.info("Visitor saved successfully with ID: {}", savedVisitor.getId());
+
+           String message = convertVisitorToJson(savedVisitor);
+           eventProducer.sendVisitorEvent(message);
+           logger.info("Visitor event sent successfully for visitor ID: {}", savedVisitor.getId());
+
+       } catch (Exception e) {
+           logger.error("Error saving visitor with details: {}", visitor, e);
+           throw new DatabaseOperationException("Error saving visitor", e);
+       }
+       return savedVisitor;
+   }
+
+    //@CachePut(value = "visitor", key = "#id", condition = "#result != null")
     public Visitor updateVisitor(Long id, Visitor visitor) {
         try {
             logger.info("Attempting to update visitor with ID: {}", id);
@@ -76,7 +85,9 @@ public class VisitorService {
                     .map(existingVisitor -> {
                         visitor.setId(id);
                         Visitor updatedVisitor = visitorRepository.save(visitor);
-                        eventProducer.sendVisitorEvent("Visitor updated: " + updatedVisitor.getId());
+                        String message = convertVisitorToJson(updatedVisitor);
+                        eventProducer.sendVisitorEvent(message);
+                        logger.info("Visitor event sent successfully for visitor ID: {}", updatedVisitor.getId());
                         return updatedVisitor;
                     }).orElseThrow(() -> {
                         logger.warn("Visitor with ID {} not found during update", id);
@@ -90,7 +101,7 @@ public class VisitorService {
         }
     }
 
-    @CacheEvict(value = "visitor", key = "#id")
+    //@CacheEvict(value = "visitor", key = "#id")
     public void deleteVisitor(Long id) {
         try {
             logger.info("Attempting to delete visitor with ID: {}", id);
@@ -102,6 +113,7 @@ public class VisitorService {
             throw new DatabaseOperationException("Error deleting visitor with ID " + id, e);
         }
     }
+
 
     public CompletableFuture<List<Visitor>> fetchAllVisitors() {
         return CompletableFuture.supplyAsync(() -> {
@@ -115,5 +127,22 @@ public class VisitorService {
             logger.info("Calculating total visit duration");
             return visitors.stream().mapToLong(Visitor::getDuration).sum();
         });
+    }
+
+
+    /**
+     * Converts a Visitor object to a JSON string.
+     *
+     * @param visitor the Visitor object to convert
+     * @return the JSON string representation of the Visitor object
+     */
+    private String convertVisitorToJson(Visitor visitor) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(visitor);
+        } catch (JsonProcessingException e) {
+            logger.error("Error converting Visitor object to JSON", e);
+            return "{}";
+        }
     }
 }

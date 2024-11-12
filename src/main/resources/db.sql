@@ -1,3 +1,18 @@
-INSERT INTO visitor (name, contact_number, purpose, visit_time, approved) VALUES
-('John Doe', '1234567890', 'Meeting', '2024-05-01T10:00:00','2024-05-01T11:00:00', false),
-('Jane Smith', '0987654321', 'Delivery', '2024-05-01T11:00:00','2024-05-01T12:00:00', true);
+CREATE TABLE visitors (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    contact_number VARCHAR(20),
+    purpose VARCHAR(255),
+    check_in DATETIME,
+    check_out DATETIME,
+    duration BIGINT,
+    approved BOOLEAN
+);
+
+
+
+INSERT INTO visitors (name, contact_number, purpose, check_in, check_out, duration, approved)
+VALUES
+    ('John Doe', '9876543210', 'Business Meeting', '2024-11-12 09:00:00', '2024-11-12 17:00:00', 8, true),
+    ('Jane Smith', '9123456789', 'Interview', '2024-11-12 10:00:00', '2024-11-12 12:00:00', 2, false),
+    ('Michael Brown', '9345678901', 'Conference', '2024-11-12 08:00:00', '2024-11-12 18:00:00', 10, true);

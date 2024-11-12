@@ -1,4 +1,4 @@
-package com.mylogo.visitors.visitormgmt.service;
+package com.mylogo.visitors.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

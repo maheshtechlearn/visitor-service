@@ -1,5 +1,6 @@
-package com.mylogo.visitors.visitormgmt.model;
+package com.mylogo.visitors.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,8 +32,10 @@ public class Visitor {
     @Column(name = "purpose")
     private String purpose;
     @Column(name = "check_in")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime checkIn;
     @Column(name = "check_out")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime checkOut;
     @Column(name = "duration")
     private long duration;

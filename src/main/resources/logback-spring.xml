@@ -18,10 +18,10 @@
         </rollingPolicy>
     </appender>
 
-    <logger name="org.springframework.kafka" level="INFO"/>
+    <logger name="org.springframework.kafka``" level="INFO"/>
     <logger name="com.mylogo.visitors" level="DEBUG"/>
 
-    <root level="INFO">
+    <root level="ERROR">
         <appender-ref ref="Console"/>
         <appender-ref ref="File"/>
     </root>

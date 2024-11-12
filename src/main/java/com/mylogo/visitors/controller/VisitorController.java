@@ -1,8 +1,7 @@
-package com.mylogo.visitors.visitormgmt.controller;
+package com.mylogo.visitors.controller;
 
-import com.mylogo.visitors.visitormgmt.config.VisitorDataSourceConfig;
-import com.mylogo.visitors.visitormgmt.model.Visitor;
-import com.mylogo.visitors.visitormgmt.service.VisitorService;
+import com.mylogo.visitors.model.Visitor;
+import com.mylogo.visitors.service.VisitorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -46,10 +45,12 @@ public class VisitorController {
     public ResponseEntity<Visitor> getVisitorById(@PathVariable Long id) {
         logger.info("Fetching visitor by ID: {}", id);
         Optional<Visitor> visitor = visitorService.getVisitorById(id);
-        return visitor.map(ResponseEntity::ok).orElseGet(() -> {
-            logger.warn("Visitor not found with ID: {}", id);
-            return ResponseEntity.notFound().build();
-        });
+        if (visitor.isPresent()) {
+            return new ResponseEntity<>(visitor.get(), HttpStatus.OK);
+        }
+        logger.warn("Visitor not found with ID: {}", id);
+        return ResponseEntity.notFound().build();
+
     }
 
     @PostMapping

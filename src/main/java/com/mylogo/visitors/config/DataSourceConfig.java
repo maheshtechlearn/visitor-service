@@ -1,4 +1,4 @@
-package com.mylogo.visitors.visitormgmt.config;
+package com.mylogo.visitors.config;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;

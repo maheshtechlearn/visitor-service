@@ -1,4 +1,4 @@
-package com.mylogo.visitors.visitormgmt.handler;
+package com.mylogo.visitors.handler;
 
 public class VisitorNotFoundException extends RuntimeException {
     public VisitorNotFoundException(String message) {

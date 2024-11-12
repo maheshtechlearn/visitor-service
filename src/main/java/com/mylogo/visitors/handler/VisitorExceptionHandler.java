@@ -1,4 +1,4 @@
-package com.mylogo.visitors.visitormgmt.handler;
+package com.mylogo.visitors.handler;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.mylogo.visitors.visitormgmt.handler;
+package com.mylogo.visitors.handler;
 
 public class VisitorRetrievalException extends RuntimeException {
     public VisitorRetrievalException(String message) {

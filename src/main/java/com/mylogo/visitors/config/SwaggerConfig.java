@@ -1,4 +1,4 @@
-package com.mylogo.visitors.visitormgmt.config;
+package com.mylogo.visitors.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
