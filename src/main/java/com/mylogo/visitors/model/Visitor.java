@@ -29,6 +29,9 @@ public class Visitor {
 
     @Column(name = "contact_number")
     private String contactNumber;
+    @Column(name="email")
+    private String email;
+
     @Column(name = "purpose")
     private String purpose;
     @Column(name = "check_in")
@@ -41,5 +44,8 @@ public class Visitor {
     private long duration;
     @Column(name = "approved")
     private boolean approved;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime createdDate=LocalDateTime.now();
 
 }

@@ -25,6 +25,9 @@ public class VisitorService {
     @Autowired
     private VisitorEventProducer eventProducer;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
    // @Cacheable(value = "visitors")
     public List<Visitor> getAllVisitors() {
         try {
@@ -137,7 +140,6 @@ public class VisitorService {
      * @return the JSON string representation of the Visitor object
      */
     private String convertVisitorToJson(Visitor visitor) {
-        ObjectMapper objectMapper = new ObjectMapper();
         try {
             return objectMapper.writeValueAsString(visitor);
         } catch (JsonProcessingException e) {
