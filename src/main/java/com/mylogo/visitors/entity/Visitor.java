@@ -1,6 +1,8 @@
-package com.mylogo.visitors.model;
+package com.mylogo.visitors.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +20,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "visitors")
+@JsonIgnoreProperties(ignoreUnknown=true)
+@JsonInclude(value = JsonInclude.Include.NON_NULL)
 public class Visitor {
 
     @Id

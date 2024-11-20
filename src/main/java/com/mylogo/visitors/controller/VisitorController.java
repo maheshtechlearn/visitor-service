@@ -1,6 +1,7 @@
 package com.mylogo.visitors.controller;
 
-import com.mylogo.visitors.model.Visitor;
+import com.mylogo.visitors.dto.VisitorDTO;
+import com.mylogo.visitors.entity.Visitor;
 import com.mylogo.visitors.service.VisitorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,24 +29,22 @@ public class VisitorController {
 
     private final VisitorService visitorService;
 
-    //private final VisitorDataSourceConfig visitorDataSourceConfig;
-
     public VisitorController(VisitorService visitorService) {
         this.visitorService = visitorService;
     }
 
     @GetMapping
-    public List<Visitor> getAllVisitors() {
+    public List<VisitorDTO> getAllVisitors() {
         logger.info("Fetching all visitors");
         return visitorService.getAllVisitors();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Visitor> getVisitorById(@PathVariable Long id) {
+    public ResponseEntity<VisitorDTO> getVisitorById(@PathVariable Long id) {
         logger.info("Fetching visitor by ID: {}", id);
-        Optional<Visitor> visitor = visitorService.getVisitorById(id);
-        if (visitor.isPresent()) {
-            return new ResponseEntity<>(visitor.get(), HttpStatus.OK);
+        VisitorDTO visitor = visitorService.getVisitorById(id);
+        if (null!=visitor) {
+            return new ResponseEntity<>(visitor, HttpStatus.OK);
         }
         logger.warn("Visitor not found with ID: {}", id);
         return ResponseEntity.notFound().build();
@@ -54,7 +52,7 @@ public class VisitorController {
     }
 
     @PostMapping
-    public Visitor addVisitor(@RequestBody Visitor visitor) {
+    public VisitorDTO addVisitor(@RequestBody Visitor visitor) {
         logger.info("Adding a new visitor");
         return visitorService.addVisitor(visitor);
     }
