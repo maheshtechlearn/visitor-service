@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -28,9 +29,11 @@ public class VisitorController {
     private static final Logger logger = LoggerFactory.getLogger(VisitorController.class);
 
     private final VisitorService visitorService;
+    private final ExecutorService executor;
 
     public VisitorController(VisitorService visitorService) {
         this.visitorService = visitorService;
+        this.executor = Executors.newFixedThreadPool(2);
     }
 
     @GetMapping
@@ -76,17 +79,38 @@ public class VisitorController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Endpoint to analyze visitors and calculate total visit duration.
+     *
+     * @return a CompletableFuture with the response entity containing the total visit duration or an error message
+     */
     @GetMapping("/visitors/analyze")
     public CompletableFuture<ResponseEntity<String>> analyzeVisitors() {
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+        logger.info("Received request to analyze visitors");
 
-        CompletableFuture<List<Visitor>> visitorsFuture = visitorService.fetchAllVisitors().thenApplyAsync(visitors -> visitors, executor);
-        CompletableFuture<Long> totalDurationFuture = visitorsFuture.thenComposeAsync(visitors -> visitorService.calculateTotalVisitDuration(visitors), executor);
-
-        return totalDurationFuture.thenApply(totalDuration ->
-                ResponseEntity.ok("Total visit duration: " + totalDuration + " minutes")
-        ).exceptionally(e -> {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error calculating total visit duration");
-        }).whenComplete((res, ex) -> executor.shutdown());
+        return visitorService.fetchAllVisitors()
+                .thenComposeAsync(visitors -> {
+                    logger.debug("Fetched {} visitors", visitors.size());
+                    return visitorService.calculateTotalVisitDuration(visitors);
+                }, executor)
+                .thenApply(totalDuration -> {
+                    logger.info("Calculated total visit duration: {} minutes", totalDuration);
+                    return ResponseEntity.ok("Total visit duration: " + totalDuration + " minutes");
+                })
+                .exceptionally(e -> {
+                    logger.error("Error calculating total visit duration", e);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("Error calculating total visit duration: " + e.getMessage());
+                });
     }
+
+    /**
+     * Shutdown the executor service when the application context is closed.
+     */
+    @PreDestroy
+    public void shutdownExecutor() {
+        logger.info("Shutting down executor service");
+        executor.shutdown();
+    }
+
 }
