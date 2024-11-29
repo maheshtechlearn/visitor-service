@@ -1,0 +1,7 @@
+apiVersion : v1
+kind : ConfigMap
+metadata:
+  name : mylogo-config
+data:
+  host : mysql
+  dbName: visitors

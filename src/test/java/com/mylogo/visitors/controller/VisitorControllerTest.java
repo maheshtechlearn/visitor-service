@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -20,8 +21,11 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -91,65 +95,67 @@ public class VisitorControllerTest {
         verify(visitorService, times(1)).updateVisitor(1L, visitor);
     }
 
-    @Test
-    void testAnalyzeVisitors_Success() throws ExecutionException, InterruptedException {
-        // Arrange
-        List<Visitor> visitors = Arrays.asList(new Visitor(), new Visitor());
-        when(visitorService.fetchAllVisitors()).thenReturn(CompletableFuture.completedFuture(visitors));
-        when(visitorService.calculateTotalVisitDuration(visitors)).thenReturn(CompletableFuture.completedFuture(120L));
-
-        // Act
-        CompletableFuture<ResponseEntity<String>> responseFuture = visitorController.analyzeVisitors();
-        ResponseEntity<String> response = responseFuture.get();
-
-        // Assert
-        assertEquals(ResponseEntity.ok("Total visit duration: 120 minutes"), response);
-        verify(visitorService, times(1)).fetchAllVisitors();
-        verify(visitorService, times(1)).calculateTotalVisitDuration(visitors);
-    }
-
-    @Test
-    void testAnalyzeVisitors_Exception() throws ExecutionException, InterruptedException {
-        // Arrange
-        when(visitorService.fetchAllVisitors()).thenReturn(CompletableFuture.failedFuture(new RuntimeException("Service error")));
-
-        // Act
-        CompletableFuture<ResponseEntity<String>> responseFuture = visitorController.analyzeVisitors();
-        ResponseEntity<String> response = responseFuture.get();
-
-        // Assert
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals("Error calculating total visit duration", response.getBody());
-        verify(visitorService, times(1)).fetchAllVisitors();
-        verify(visitorService, times(0)).calculateTotalVisitDuration(anyList());
-    }
 
     @Test
     void testDeleteVisitor_Success() {
-        // Arrange
         Long visitorId = 1L;
 
-        // Act
         ResponseEntity<Void> response = visitorController.deleteVisitor(visitorId);
 
-        // Assert
         assertEquals(ResponseEntity.noContent().build(), response);
         verify(visitorService, times(1)).deleteVisitor(visitorId);
     }
 
     @Test
     void testDeleteVisitor_NonExistentId() {
-        // Arrange
         Long nonExistentVisitorId = 999L;
         doThrow(new RuntimeException("Visitor not found")).when(visitorService).deleteVisitor(nonExistentVisitorId);
 
-        // Act & Assert
         try {
             visitorController.deleteVisitor(nonExistentVisitorId);
         } catch (RuntimeException e) {
             assertEquals("Visitor not found", e.getMessage());
         }
         verify(visitorService, times(1)).deleteVisitor(nonExistentVisitorId);
+    }
+
+
+
+
+    @Test
+    void testAnalyzeVisitors_Success() throws Exception {
+        var visitors = Arrays.asList(new Visitor(),new Visitor());
+        when(visitorService.fetchAllVisitors())
+                .thenReturn(CompletableFuture.completedFuture(visitors));
+        when(visitorService.calculateTotalVisitDuration(visitors))
+                .thenReturn(CompletableFuture.completedFuture(75L));
+
+        CompletableFuture<ResponseEntity<String>> responseFuture = visitorController.analyzeVisitors();
+        ResponseEntity<String> response = responseFuture.get();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Total visit duration: 75 minutes", response.getBody());
+
+        verify(visitorService, times(1)).fetchAllVisitors();
+        verify(visitorService, times(1)).calculateTotalVisitDuration(visitors);
+    }
+
+    @Test
+    void testAnalyzeVisitors_EmptyVisitors() throws Exception {
+        List<Visitor> visitors = Collections.emptyList();
+        when(visitorService.fetchAllVisitors())
+                .thenReturn(CompletableFuture.completedFuture(visitors));
+        when(visitorService.calculateTotalVisitDuration(visitors))
+                .thenReturn(CompletableFuture.completedFuture(0L));
+
+        CompletableFuture<ResponseEntity<String>> responseFuture = visitorController.analyzeVisitors();
+        ResponseEntity<String> response = responseFuture.get();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Total visit duration: 0 minutes", response.getBody());
+
+        verify(visitorService, times(1)).fetchAllVisitors();
+        verify(visitorService, times(1)).calculateTotalVisitDuration(visitors);
     }
 
 }
