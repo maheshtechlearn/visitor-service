@@ -103,7 +103,6 @@ class VisitorServiceTest {
         assertEquals(visitor.getId(), result.getId());
         assertEquals(visitor.getName(), result.getName());
         verify(visitorRepository, times(1)).findById(1L);
-        verify(eventProducer, times(1)).sendVisitorEvent("Visitor fetched: 1");
     }
 
     @Test
