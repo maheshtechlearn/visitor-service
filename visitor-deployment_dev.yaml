@@ -16,7 +16,7 @@ spec:
         app: visitor-service
     spec:
       containers:
-        - name: visitorservice
+        - name: visitor-service
           image: mahesh541/api-visitor-service:latest
           ports:
             - containerPort: 8083
