@@ -71,7 +71,10 @@ public class VisitorService {
             CompletableFuture.runAsync(() -> eventProducer.sendVisitorEvent("Visitor fetched: " + visitor.get().getId()));
             BeanUtils.copyProperties(visitor.get(), visitorDTO);
             return visitorDTO;
-        } catch (Exception e) {
+        }catch (VisitorNotFoundException e){
+            throw new VisitorNotFoundException("Visitor with ID " + id + " not found");
+        }
+        catch (Exception e) {
             logger.error("Error retrieving visitor with ID: {}", id, e);
             throw new DatabaseOperationException("Error retrieving visitor with ID " + id, e);
         }

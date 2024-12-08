@@ -109,10 +109,10 @@ class VisitorServiceTest {
     void testGetVisitorById_VisitorNotFound() {
         when(visitorRepository.findById(1L)).thenReturn(Optional.empty());
 
-        DatabaseOperationException exception = assertThrows(DatabaseOperationException.class,
+        VisitorNotFoundException exception = assertThrows(VisitorNotFoundException.class,
                 () -> visitorService.getVisitorById(1L));
 
-        assertEquals("Error retrieving visitor with ID 1", exception.getMessage());
+        assertEquals("Visitor with ID 1 not found", exception.getMessage());
         verify(visitorRepository, times(1)).findById(1L);
         verifyNoInteractions(eventProducer);
     }
@@ -155,10 +155,10 @@ class VisitorServiceTest {
 
     @Test
     void testGetVisitorById_InvalidId() {
-        DatabaseOperationException exception = assertThrows(DatabaseOperationException.class,
+        VisitorNotFoundException exception = assertThrows(VisitorNotFoundException.class,
                 () -> visitorService.getVisitorById(null));
 
-        assertEquals("Error retrieving visitor with ID null", exception.getMessage());
+        assertEquals("Visitor with ID null not found", exception.getMessage());
     }
 
 
