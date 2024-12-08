@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: visitorservice-deployment
+  name: visitor-service-deployment
   namespace: dev
   labels:
-    app: visitorservice
+    app: visitor-service
 spec:
   replicas: 1  # Number of desired replicas
   selector:
     matchLabels:
-      app: visitorservice
+      app: visitor-service
   template:
     metadata:
       labels:
-        app: visitorservice
+        app: visitor-service
     spec:
       containers:
         - name: visitorservice
-          image: mahesh541/visitorservice:latest
+          image: mahesh541/api-visitor-service:latest
           ports:
             - containerPort: 8083
           env: # Setting Enviornmental Variables
@@ -45,17 +45,16 @@ spec:
                   name: mylogo-secrets
                   key: password
 
-
 ---
 
 apiVersion: v1 # Kubernetes API version
 kind: Service # Kubernetes resource kind we are creating
 metadata: # Metadata of the resource kind we are creating
-  name: visitorservice-deployment
+  name: visitor-service-deployment
   namespace: dev
 spec:
   selector:
-    app: visitorservice
+    app: visitor-service
   ports:
     - protocol: "TCP"
       port: 8083 # The port that the service is running on in the cluster
