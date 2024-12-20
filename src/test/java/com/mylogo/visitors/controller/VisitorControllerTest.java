@@ -15,17 +15,11 @@ import org.springframework.http.ResponseEntity;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,9 +81,9 @@ public class VisitorControllerTest {
     @Test
     void testUpdateVisitor_Success() {
         Visitor visitor = new Visitor();
-        when(visitorService.updateVisitor(1L, visitor)).thenReturn(visitor);
+        when(visitorService.updateVisitor(1L, visitor)).thenReturn(new VisitorDTO());
 
-        ResponseEntity<Visitor> response = visitorController.updateVisitor(1L, visitor);
+        ResponseEntity<VisitorDTO> response = visitorController.updateVisitor(1L, visitor);
 
         assertEquals(ResponseEntity.ok(visitor), response);
         verify(visitorService, times(1)).updateVisitor(1L, visitor);
@@ -118,44 +112,4 @@ public class VisitorControllerTest {
         }
         verify(visitorService, times(1)).deleteVisitor(nonExistentVisitorId);
     }
-
-
-
-
-    @Test
-    void testAnalyzeVisitors_Success() throws Exception {
-        var visitors = Arrays.asList(new Visitor(),new Visitor());
-        when(visitorService.fetchAllVisitors())
-                .thenReturn(CompletableFuture.completedFuture(visitors));
-        when(visitorService.calculateTotalVisitDuration(visitors))
-                .thenReturn(CompletableFuture.completedFuture(75L));
-
-        CompletableFuture<ResponseEntity<String>> responseFuture = visitorController.analyzeVisitors();
-        ResponseEntity<String> response = responseFuture.get();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Total visit duration: 75 minutes", response.getBody());
-
-        verify(visitorService, times(1)).fetchAllVisitors();
-        verify(visitorService, times(1)).calculateTotalVisitDuration(visitors);
-    }
-
-    @Test
-    void testAnalyzeVisitors_EmptyVisitors() throws Exception {
-        List<Visitor> visitors = Collections.emptyList();
-        when(visitorService.fetchAllVisitors())
-                .thenReturn(CompletableFuture.completedFuture(visitors));
-        when(visitorService.calculateTotalVisitDuration(visitors))
-                .thenReturn(CompletableFuture.completedFuture(0L));
-
-        CompletableFuture<ResponseEntity<String>> responseFuture = visitorController.analyzeVisitors();
-        ResponseEntity<String> response = responseFuture.get();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Total visit duration: 0 minutes", response.getBody());
-
-        verify(visitorService, times(1)).fetchAllVisitors();
-        verify(visitorService, times(1)).calculateTotalVisitDuration(visitors);
-    }
-
 }

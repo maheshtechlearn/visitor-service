@@ -19,9 +19,14 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 public class VisitorService {
@@ -68,7 +73,7 @@ public class VisitorService {
                 throw new VisitorNotFoundException("Visitor with ID " + id + " not found");
             }
             VisitorDTO visitorDTO=new VisitorDTO();
-            CompletableFuture.runAsync(() -> eventProducer.sendVisitorEvent("Visitor fetched: " + visitor.get().getId()));
+            CompletableFuture.runAsync(() -> eventProducer.produceVisitorEvent("Visitor fetched: " + visitor.get().getId()));
             BeanUtils.copyProperties(visitor.get(), visitorDTO);
             return visitorDTO;
         }catch (VisitorNotFoundException e){
@@ -94,7 +99,7 @@ public class VisitorService {
            logger.info("Visitor saved successfully with ID: {}", savedVisitor.getId());
 
            String message = convertVisitorToJson(savedVisitor);
-           CompletableFuture.runAsync(()->eventProducer.sendVisitorEvent(message));
+           CompletableFuture.runAsync(()->eventProducer.produceVisitorEvent(message));
            logger.info("Visitor event sent successfully for visitor ID: {}", savedVisitor.getId());
 
        } catch (Exception e) {
@@ -107,7 +112,7 @@ public class VisitorService {
    }
 
     @CachePut(value = "visitor", key = "#id", condition = "#result != null")
-    public Visitor updateVisitor(Long id, Visitor visitor) {
+    public VisitorDTO updateVisitor(Long id, Visitor visitor) {
         try {
             logger.info("Attempting to update visitor with ID: {}", id);
             return visitorRepository.findById(id)
@@ -115,9 +120,11 @@ public class VisitorService {
                         visitor.setId(id);
                         Visitor updatedVisitor = visitorRepository.save(visitor);
                         String message = convertVisitorToJson(updatedVisitor);
-                        CompletableFuture.runAsync(()->eventProducer.sendVisitorEvent(message));
+                        CompletableFuture.runAsync(()->eventProducer.produceVisitorEvent(message));
                         logger.info("Visitor sent update event successfully for visitor ID: {}", updatedVisitor.getId());
-                        return updatedVisitor;
+                        VisitorDTO visitorDTO=new VisitorDTO();
+                        BeanUtils.copyProperties(updatedVisitor,visitorDTO);
+                        return visitorDTO;
                     }).orElseThrow(() -> {
                         logger.warn("Visitor with ID {} not found during update", id);
                         return new VisitorNotFoundException("Visitor with ID " + id + " not found");
@@ -135,7 +142,7 @@ public class VisitorService {
         try {
             logger.info("Attempting to delete visitor with ID: {}", id);
             visitorRepository.deleteById(id);
-            CompletableFuture.runAsync(()->eventProducer.sendVisitorEvent("Visitor Deleted with visitorID: " + id));
+            CompletableFuture.runAsync(()->eventProducer.produceVisitorEvent("Visitor Deleted with visitorID: " + id));
             logger.info("Successfully deleted visitor with ID: {}", id);
         } catch (Exception e) {
             logger.error("Error deleting visitor with ID: {}", id, e);
@@ -172,5 +179,51 @@ public class VisitorService {
             logger.error("Error converting Visitor object to JSON", e);
             return "{}";
         }
+    }
+
+
+    public List<Visitor> getAllVisitorsSortedByCheckIn() {
+        return visitorRepository.findAll().stream()
+                .sorted(Comparator.comparing(Visitor::getCheckIn, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Visitor::getId))
+                .collect(Collectors.toList());
+    }
+
+    // Filter visitors who have been approved
+    public List<Visitor> getApprovedVisitors() {
+        return visitorRepository.findAll().stream()
+                .filter(Visitor::isApproved)
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, List<Visitor>> groupVisitorsByPurpose() {
+        Map<String, List<Visitor>> groupedVisitors = visitorRepository.findAll().stream()
+                .collect(Collectors.groupingBy(visitor ->
+                                Optional.ofNullable(visitor.getPurpose()).orElse("Unknown"),
+                        LinkedHashMap::new, // Maintain insertion order
+                        Collectors.toList()
+                ));
+
+        // Move the "Unknown" group to the end of the map
+        if (groupedVisitors.containsKey("Unknown")) {
+            List<Visitor> unknownVisitors = groupedVisitors.remove("Unknown");
+            groupedVisitors.put("Unknown", unknownVisitors);
+        }
+
+        return groupedVisitors;
+    }
+
+    // Calculate total visit duration for all visitors
+    public long calculateTotalVisitDuration() {
+        return visitorRepository.findAll().stream()
+                .mapToLong(Visitor::getDuration)
+                .sum();
+    }
+
+    // Find unique contact numbers using a Set
+    public Set<String> getUniqueContactNumbers() {
+        return visitorRepository.findAll().stream()
+                .map(Visitor::getContactNumber)
+                .collect(Collectors.toSet());
     }
 }

@@ -7,13 +7,14 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class VisitorEventProducer {
+public class VisitorEventProducer implements EventProducer {
 
     private static final Logger logger = LoggerFactory.getLogger(VisitorEventProducer.class);
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
-    public void sendVisitorEvent(String message) {
+    @Override
+    public void produceVisitorEvent(String message) {
         kafkaTemplate.send("visitorTopic", message);
         logger.info("Produced message: {} ", message);
     }

@@ -29,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -150,7 +149,7 @@ class VisitorServiceTest {
 
         Thread.sleep(100);
 
-        verify(eventProducer, times(1)).sendVisitorEvent("Visitor fetched: 1");
+        verify(eventProducer, times(1)).produceVisitorEvent("Visitor fetched: 1");
     }
 
     @Test
@@ -251,7 +250,7 @@ class VisitorServiceTest {
         when(visitorRepository.findById(id)).thenReturn(Optional.of(existingVisitor));
         when(visitorRepository.save(visitor)).thenReturn(visitor);
 
-        Visitor result = visitorService.updateVisitor(id, visitor);
+        VisitorDTO result = visitorService.updateVisitor(id, visitor);
 
         assertNotNull(result);
         assertEquals(id, result.getId());
@@ -361,7 +360,7 @@ class VisitorServiceTest {
 
         Thread.sleep(100);
 
-        verify(eventProducer, times(1)).sendVisitorEvent("Visitor Deleted with visitorID: " + id);
+        verify(eventProducer, times(1)).produceVisitorEvent("Visitor Deleted with visitorID: " + id);
     }
 
 

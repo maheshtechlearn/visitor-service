@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,7 +48,7 @@ public class VisitorController {
     public ResponseEntity<VisitorDTO> getVisitorById(@PathVariable Long id) {
         logger.info("Fetching visitor by ID: {}", id);
         VisitorDTO visitor = visitorService.getVisitorById(id);
-        if (null!=visitor) {
+        if (null != visitor) {
             return new ResponseEntity<>(visitor, HttpStatus.OK);
         }
         logger.warn("Visitor not found with ID: {}", id);
@@ -61,9 +63,9 @@ public class VisitorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Visitor> updateVisitor(@PathVariable Long id, @RequestBody Visitor visitor) {
+    public ResponseEntity<VisitorDTO> updateVisitor(@PathVariable Long id, @RequestBody Visitor visitor) {
         logger.info("Updating visitor with ID: {}", id);
-        Visitor updatedVisitor = visitorService.updateVisitor(id, visitor);
+        VisitorDTO updatedVisitor = visitorService.updateVisitor(id, visitor);
         if (updatedVisitor != null) {
             return ResponseEntity.ok(updatedVisitor);
         } else {
@@ -79,29 +81,31 @@ public class VisitorController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Endpoint to analyze visitors and calculate total visit duration.
-     *
-     * @return a CompletableFuture with the response entity containing the total visit duration or an error message
-     */
-    @GetMapping("/visitors/analyze")
-    public CompletableFuture<ResponseEntity<String>> analyzeVisitors() {
-        logger.info("Received request to analyze visitors");
 
-        return visitorService.fetchAllVisitors()
-                .thenComposeAsync(visitors -> {
-                    logger.debug("Fetched {} visitors", visitors.size());
-                    return visitorService.calculateTotalVisitDuration(visitors);
-                }, executor)
-                .thenApply(totalDuration -> {
-                    logger.info("Calculated total visit duration: {} minutes", totalDuration);
-                    return ResponseEntity.ok("Total visit duration: " + totalDuration + " minutes");
-                })
-                .exceptionally(e -> {
-                    logger.error("Error calculating total visit duration", e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body("Error calculating total visit duration: " + e.getMessage());
-                });
+
+    @GetMapping("/sorted")
+    public List<Visitor> getAllVisitorsSortedByCheckIn() {
+        return visitorService.getAllVisitorsSortedByCheckIn();
+    }
+
+    @GetMapping("/approved")
+    public List<Visitor> getApprovedVisitors() {
+        return visitorService.getApprovedVisitors();
+    }
+
+    @GetMapping("/grouped-by-purpose")
+    public Map<String, List<Visitor>> getVisitorsGroupedByPurpose() {
+        return visitorService.groupVisitorsByPurpose();
+    }
+
+    @GetMapping("/total-duration")
+    public long calculateTotalVisitDuration() {
+        return visitorService.calculateTotalVisitDuration();
+    }
+
+    @GetMapping("/unique-contacts")
+    public Set<String> getUniqueContactNumbers() {
+        return visitorService.getUniqueContactNumbers();
     }
 
     /**
