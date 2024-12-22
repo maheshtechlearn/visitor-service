@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class VisitorOperationsService {
@@ -91,9 +90,5 @@ public class VisitorOperationsService {
         }
         visitorRepository.deleteById(id);
         eventProducer.produceVisitorEvent("Visitor deleted with ID: " + id);
-    }
-
-    public CompletableFuture<Long> calculateTotalVisitDuration(List<Visitor> visitors) {
-        return CompletableFuture.supplyAsync(() -> visitors.stream().mapToLong(Visitor::getDuration).sum());
     }
 }

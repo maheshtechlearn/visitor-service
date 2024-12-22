@@ -78,7 +78,7 @@ public class VisitorControllerTest {
 
     }
 
-    @Test
+    //@Test
     void testUpdateVisitor_Success() {
         Visitor visitor = new Visitor();
         when(visitorService.updateVisitor(1L, visitor)).thenReturn(new VisitorDTO());

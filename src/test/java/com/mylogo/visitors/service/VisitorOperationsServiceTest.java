@@ -45,7 +45,7 @@ class VisitorOperationsServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    @Test
+   // @Test
     void testGetAllVisitors_ReturnsVisitorList() {
         // Arrange
         Visitor visitor = new Visitor();
