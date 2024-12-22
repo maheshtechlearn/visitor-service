@@ -1,29 +1,89 @@
-# Docker
-# Build a Docker image
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
+# File: azure-pipelines.yml
 trigger:
-- main
+  branches:
+    include:
+      - main # or the branch you want to trigger builds for
 
-resources:
-- repo: self
+pool:
+  vmImage: 'ubuntu-latest' # Use an appropriate image, e.g., 'windows-latest' if necessary
 
 variables:
-  tag: '$(Build.BuildId)'
+  buildConfiguration: 'Release'
+  buildPlatform: 'Any CPU'
+  serviceName: 'visitor-service'
 
 stages:
-- stage: Build
-  displayName: Build image
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: Docker@2
-      displayName: Build an image
-      inputs:
-        command: build
-        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        tags: |
-          $(tag)
+  - stage: Build
+    displayName: Build and Test
+    jobs:
+      - job: Build
+        displayName: Build and Test
+        steps:
+          # Checkout the code
+          - task: Checkout@1
+            displayName: 'Checkout code'
+
+          # Install dependencies (Java example using Maven)
+          - script: |
+              echo "Installing dependencies..."
+              mvn clean install
+            displayName: 'Install Dependencies'
+
+          # Run unit tests
+          - script: |
+              echo "Running tests..."
+              mvn test
+            displayName: 'Run Unit Tests'
+
+          # Publish test results
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            inputs:
+              testResultsFiles: '**/target/surefire-reports/*.xml'
+              testRunTitle: 'Unit Tests'
+
+          # Archive artifacts
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Build Artifacts'
+            inputs:
+              artifactName: 'drop'
+              targetPath: $(System.DefaultWorkingDirectory)/target
+
+  - stage: Deploy
+    displayName: Deploy to Environments
+    dependsOn: Build
+    jobs:
+      - deployment: DeployToDev
+        displayName: Deploy to Development
+        environment: Development
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Deploy the service to the environment
+                - task: AzureWebApp@1
+                  displayName: 'Deploy to Azure Web App'
+                  inputs:
+                    azureSubscription: $(AZURESUBSCRIPTION)
+                    appName: 'visitor-service-dev'
+                    package: '$(Pipeline.Workspace)/drop/*.jar' # Adjust for your build artifact format
+
+      - deployment: DeployToProd
+        displayName: Deploy to Production
+        environment: Production
+        dependsOn: DeployToDev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Approval gate
+                - task: ManualValidation@0
+                  displayName: 'Approval for Production Deployment'
+
+                # Deploy the service to the production environment
+                - task: AzureWebApp@1
+                  displayName: 'Deploy to Azure Web App'
+                  inputs:
+                    azureSubscription: $(AZURESUBSCRIPTION)
+                    appName: 'visitor-service-prod'
+                    package: '$(Pipeline.Workspace)/drop/*.war' # Adjust for your build artifact format
