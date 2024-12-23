@@ -19,7 +19,7 @@ spec:
         - name: visitor-service
           image: mahesh541/api-visitor-service:latest
           ports:
-            - containerPort: 8083
+            - containerPort: 8080
           env: # Setting Enviornmental Variables
             - name: DB_HOST   # Setting Database host address from configMap
               valueFrom:
@@ -51,6 +51,7 @@ spec:
                   key: instanceName
 
 
+
 ---
 
 apiVersion: v1 # Kubernetes API version
@@ -62,7 +63,7 @@ spec:
   selector:
     app: visitor-service
   ports:
-    - protocol: "TCP"
-      port: 8083 # The port that the service is running on in the cluster
-      targetPort: 8083 # The port exposed by the service
-  type: NodePort # type of the service.
+    - protocol: TCP
+      port: 8080 # The port that the service is running on in the cluster
+      targetPort: 8080 # The port exposed by the service
+  type: LoadBalancer # type of the service.
