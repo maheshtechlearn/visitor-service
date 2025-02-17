@@ -24,9 +24,8 @@ COPY target/visitor-service-0.0.1-SNAPSHOT.jar visitor-service-0.0.1-SNAPSHOT.ja
 # Define a volume for logs (optional)
 VOLUME /app/logs
 
-# Use a health check to ensure the application is running
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD curl --fail http://localhost:8080/actuator/health || exit 1
+# Fix incorrect permissions
+RUN chmod +x visitor-service-0.0.1-SNAPSHOT.jar
 
-# Command to run the application (use the actual JAR name)
+# Command to run the application
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar visitor-service-0.0.1-SNAPSHOT.jar"]
