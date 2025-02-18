@@ -67,6 +67,7 @@ public class VisitorController {
         logger.info("Updating visitor with ID: {}", id);
         VisitorDTO updatedVisitor = visitorService.updateVisitor(id, visitor);
         if (updatedVisitor != null) {
+            logger.info("Updated Successfully visitor with ID: {}", id);
             return ResponseEntity.ok(updatedVisitor);
         } else {
             logger.warn("Failed to update visitor with ID: {}", id);
