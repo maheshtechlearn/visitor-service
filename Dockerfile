@@ -10,4 +10,4 @@ ADD target/visitor-service-0.0.1-SNAPSHOT.jar visitor-service-0.0.1-SNAPSHOT.jar
 
 
 # Command to run the application
-ENTRYPOINT ["java", "-jar", "notification-service-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "visitor-service-0.0.1-SNAPSHOT.jar"]
