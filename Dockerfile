@@ -2,7 +2,7 @@
 FROM eclipse-temurin:17-jre-alpine
 
 # Expose the port your application runs on
-EXPOSE 8080
+EXPOSE 2345
 
 
 # Copy the JAR file into the container

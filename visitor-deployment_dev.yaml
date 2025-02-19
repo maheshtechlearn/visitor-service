@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: visitor-service-deployment
+  name: visitor-service
   namespace: dev
   labels:
     app: visitor-service
 spec:
-  replicas: 1  # Number of desired replicas
+  replicas: 2  # Number of desired replicas
   selector:
     matchLabels:
       app: visitor-service
@@ -19,7 +19,7 @@ spec:
         - name: visitor-service
           image: mahesh541/api-visitor-service:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 2345
           env: # Setting Enviornmental Variables
             - name: DB_HOST   # Setting Database host address from configMap
               valueFrom:
@@ -57,7 +57,7 @@ spec:
 apiVersion: v1 # Kubernetes API version
 kind: Service # Kubernetes resource kind we are creating
 metadata: # Metadata of the resource kind we are creating
-  name: visitor-service-deployment
+  name: visitor-service
   namespace: dev
 spec:
   selector:
@@ -65,5 +65,5 @@ spec:
   ports:
     - protocol: TCP
       port: 80 # The port that the service is running on in the cluster
-      targetPort: 8080 # The port exposed by the service
+      targetPort: 2345 # The port exposed by the service
   type: LoadBalancer # type of the service.
